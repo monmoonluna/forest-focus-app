@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'circular_slider.dart';
 import 'countdown_screen.dart';
+import 'presentation/screens/statistics_screen.dart';
+import 'data/services/auth_service.dart';
 
-void main() => runApp(const FocusApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await AuthService().signInAnonymously(); // Đăng nhập ẩn danh để lưu session
+  runApp(const FocusApp());
+}
 
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
@@ -40,7 +48,16 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.menu, size: 30, color: Colors.white),
+                  IconButton(
+                    icon: const Icon(Icons.menu, size: 30, color: Colors.white),
+                    onPressed: () {
+                      // Chuyển đến màn hình thống kê khi nhấn nút menu
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => StatisticsScreen()),
+                      );
+                    },
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -56,7 +73,7 @@ class _HomePageState extends State<HomePage> {
                         Icon(Icons.add, color: Colors.white, size: 16),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -97,7 +114,7 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.black12,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2))
+                            BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2)),
                           ],
                         ),
                         child: Row(
