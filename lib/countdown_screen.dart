@@ -36,7 +36,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
       } else {
         timer.cancel();
         audioPlayer.stop();
-        // Lưu session vào Firestore khi hoàn thành
+        // Lưu session khi hoàn thành (Thành công)
         _sessionService.createPlantingSession(
           duration: widget.totalMinutes,
           status: "Thành công",
@@ -210,7 +210,16 @@ class _CountdownScreenState extends State<CountdownScreen> {
                         TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
                         TextButton(
                           onPressed: () {
+                            timer?.cancel(); // Dừng timer
                             audioPlayer.stop();
+                            // Lưu session khi bỏ cuộc (Thất bại)
+                            _sessionService.createPlantingSession(
+                              duration: widget.totalMinutes,
+                              status: "Thất bại",
+                              date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                              pointsEarned: 0, // Không có điểm khi thất bại
+                            );
+                            // Quay về màn hình chính
                             Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                           child: const Text('Yes'),
