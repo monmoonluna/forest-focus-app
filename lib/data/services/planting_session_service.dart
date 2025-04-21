@@ -12,6 +12,10 @@ class PlantingSessionService {
     required int pointsEarned,
   }) async {
     try {
+      if (_auth.currentUser == null) {
+        print("User is not authenticated! Cannot create session.");
+        return;
+      }
       String userId = _auth.currentUser!.uid;
       await _firestore.collection('planting_sessions').add({
         'user_id': userId,
@@ -28,6 +32,10 @@ class PlantingSessionService {
 
   Future<List<Map<String, dynamic>>> getPlantingHistory() async {
     try {
+      if (_auth.currentUser == null) {
+        print("User is not authenticated! Cannot fetch history.");
+        return [];
+      }
       String userId = _auth.currentUser!.uid;
       QuerySnapshot snapshot = await _firestore
           .collection('planting_sessions')

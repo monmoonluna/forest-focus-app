@@ -8,7 +8,12 @@ import 'data/services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await AuthService().signInAnonymously(); // Đăng nhập ẩn danh để lưu session
+  try {
+    await AuthService().signInAnonymously();
+    print("Successfully signed in anonymously!");
+  } catch (e) {
+    print("Failed to sign in anonymously: $e");
+  }
   runApp(const FocusApp());
 }
 
@@ -42,7 +47,6 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
@@ -51,7 +55,6 @@ class _HomePageState extends State<HomePage> {
                   IconButton(
                     icon: const Icon(Icons.menu, size: 30, color: Colors.white),
                     onPressed: () {
-                      // Chuyển đến màn hình thống kê khi nhấn nút menu
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => StatisticsScreen()),
@@ -60,10 +63,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF25863A),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
                     child: Row(
                       children: const [
                         Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
@@ -77,15 +76,11 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // Main content - chiếm toàn bộ phần còn lại
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // "Start planting!" gần sát vòng tròn
                   const Text(
                     "Start planting!",
                     style: TextStyle(
@@ -94,8 +89,6 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-
-                  // Vòng tròn + cây
                   CircularTimePicker(
                     onChanged: (value) {
                       setState(() {
@@ -103,19 +96,13 @@ class _HomePageState extends State<HomePage> {
                       });
                     },
                   ),
-
-                  // Phần bên dưới vòng tròn
                   Column(
                     children: [
-                      // Tag Study
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.black12,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2)),
-                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -126,10 +113,7 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Timer text
                       Text(
                         "${selectedMinutes.toString().padLeft(2, '0')}:00",
                         style: const TextStyle(
@@ -138,10 +122,7 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.white,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Button Plant
                       ElevatedButton(
                         onPressed: () {
                           Navigator.push(
@@ -157,7 +138,6 @@ class _HomePageState extends State<HomePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 4,
                         ),
                         child: const Text(
                           "Plant",
