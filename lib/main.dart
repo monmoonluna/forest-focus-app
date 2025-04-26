@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
-import 'circular_slider.dart';
-import 'countdown_screen.dart';
+import 'screens/circular_slider.dart';
+import 'screens/countdown_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
 
-void main() => runApp(const FocusApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const FocusApp());
+}
+
+
+// class FocusApp extends StatelessWidget {
+//   const FocusApp({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Focus Tree',
+//       debugShowCheckedModeBanner: false,
+//       home: const HomePage(),
+//     );
+//   }
+// }
 
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
@@ -12,7 +33,7 @@ class FocusApp extends StatelessWidget {
     return MaterialApp(
       title: 'Focus Tree',
       debugShowCheckedModeBanner: false,
-      home: const HomePage(),
+      home: LoginScreen(),
     );
   }
 }
