@@ -63,6 +63,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - assets/images
     - assets/tree.png
     - assets/tree_stage_1.png
     - assets/tree_stage_2.png
