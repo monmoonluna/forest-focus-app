@@ -45,8 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final user = await _authService.signUp(email: email, password: password);
-
+    final user = await _authService.signUp(email: email, password: password, name: name);
     if (user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Đăng ký thành công!")),
@@ -57,7 +56,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Đăng ký thất bại!")),
+        SnackBar(content: Text("Đăng ký thất bại! Vui lòng kiểm tra thông tin và thử lại.")),
       );
     }
   }

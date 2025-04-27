@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "421450016212",
-    "project_id": "forest-61891",
-    "storage_bucket": "forest-61891.firebasestorage.app"
+    "project_number": "881084146590",
+    "project_id": "forest-focus-app-594dc",
+    "storage_bucket": "forest-focus-app-594dc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:421450016212:android:fec97fea690e8308f8e241",
+        "mobilesdk_app_id": "1:881084146590:android:f3914d608bb2824d422c8f",
         "android_client_info": {
           "package_name": "com.example.focus_app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA00cA1BjzTJRzzLLl5snty2aW618Pzuio"
+          "current_key": "AIzaSyDEmlxJal0ZGVqu_W5hzk7JddnZCyBgljY"
         }
       ],
       "services": {

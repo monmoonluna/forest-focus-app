@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'signup_screen.dart'; // Import màn hình đăng ký
-
+import '../services/auth_service.dart';
 class LoginScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  final AuthService _authService = AuthService();
   Future<void> _signIn(BuildContext context) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -17,13 +17,21 @@ class LoginScreen extends StatelessWidget {
       return;
     }
 
-    // Xử lý đăng nhập tại đây (ví dụ gọi AuthService)
+    // Gọi hàm signIn từ AuthService
+    final user = await _authService.signIn(email: email, password: password);
 
-    // Nếu đăng nhập thành công, chuyển đến trang chủ (HomePage)
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
-    );
+    if (user != null) {
+      // Đăng nhập thành công, chuyển đến HomePage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    } else {
+      // Đăng nhập thất bại, hiển thị thông báo lỗi
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Đăng nhập thất bại! Vui lòng kiểm tra email hoặc mật khẩu.")),
+      );
+    }
   }
 
   @override
