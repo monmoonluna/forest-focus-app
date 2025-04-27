@@ -41,46 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDdNlibod74J7tj-Fn3DeMmeFpIwhmJFvs',
-    appId: '1:421450016212:web:da8dcfb741215addf8e241',
-    messagingSenderId: '421450016212',
-    projectId: 'forest-61891',
-    authDomain: 'forest-61891.firebaseapp.com',
-    storageBucket: 'forest-61891.firebasestorage.app',
+    apiKey: 'AIzaSyB-zgdJ08hthIDdRQ7E4rDCvUXvnocz-Mc',
+    appId: '1:881084146590:web:81fbac9a5ec69e50422c8f',
+    messagingSenderId: '881084146590',
+    projectId: 'forest-focus-app-594dc',
+    authDomain: 'forest-focus-app-594dc.firebaseapp.com',
+    storageBucket: 'forest-focus-app-594dc.firebasestorage.app',
+    measurementId: 'G-45NF5WKZNT',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA00cA1BjzTJRzzLLl5snty2aW618Pzuio',
-    appId: '1:421450016212:android:fec97fea690e8308f8e241',
-    messagingSenderId: '421450016212',
-    projectId: 'forest-61891',
-    storageBucket: 'forest-61891.firebasestorage.app',
+    apiKey: 'AIzaSyDEmlxJal0ZGVqu_W5hzk7JddnZCyBgljY',
+    appId: '1:881084146590:android:f3914d608bb2824d422c8f',
+    messagingSenderId: '881084146590',
+    projectId: 'forest-focus-app-594dc',
+    storageBucket: 'forest-focus-app-594dc.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAmjSkhM-fopVlZmIOovqcSQvx4uW4HF-E',
-    appId: '1:421450016212:ios:c12be2caaf192660f8e241',
-    messagingSenderId: '421450016212',
-    projectId: 'forest-61891',
-    storageBucket: 'forest-61891.firebasestorage.app',
+    apiKey: 'AIzaSyASCso4nU7r6WeaTCibkcVR9ZJR-ZdLdh8',
+    appId: '1:881084146590:ios:c154d5c14f034c5d422c8f',
+    messagingSenderId: '881084146590',
+    projectId: 'forest-focus-app-594dc',
+    storageBucket: 'forest-focus-app-594dc.firebasestorage.app',
     iosBundleId: 'com.example.focusApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAmjSkhM-fopVlZmIOovqcSQvx4uW4HF-E',
-    appId: '1:421450016212:ios:c12be2caaf192660f8e241',
-    messagingSenderId: '421450016212',
-    projectId: 'forest-61891',
-    storageBucket: 'forest-61891.firebasestorage.app',
+    apiKey: 'AIzaSyASCso4nU7r6WeaTCibkcVR9ZJR-ZdLdh8',
+    appId: '1:881084146590:ios:c154d5c14f034c5d422c8f',
+    messagingSenderId: '881084146590',
+    projectId: 'forest-focus-app-594dc',
+    storageBucket: 'forest-focus-app-594dc.firebasestorage.app',
     iosBundleId: 'com.example.focusApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDdNlibod74J7tj-Fn3DeMmeFpIwhmJFvs',
-    appId: '1:421450016212:web:ac7165cee1a6db93f8e241',
-    messagingSenderId: '421450016212',
-    projectId: 'forest-61891',
-    authDomain: 'forest-61891.firebaseapp.com',
-    storageBucket: 'forest-61891.firebasestorage.app',
+    apiKey: 'AIzaSyB-zgdJ08hthIDdRQ7E4rDCvUXvnocz-Mc',
+    appId: '1:881084146590:web:f2ff56ec8c676931422c8f',
+    messagingSenderId: '881084146590',
+    projectId: 'forest-focus-app-594dc',
+    authDomain: 'forest-focus-app-594dc.firebaseapp.com',
+    storageBucket: 'forest-focus-app-594dc.firebasestorage.app',
+    measurementId: 'G-ZJMTZHFRTN',
   );
 }
