@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/circular_slider.dart';
 import 'screens/countdown_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,22 +9,11 @@ import 'screens/signup_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Đăng xuất người dùng khi khởi động (tùy chọn)
+  await FirebaseAuth.instance.signOut();
+  print("Current user after sign out: ${FirebaseAuth.instance.currentUser?.uid}");
   runApp(const FocusApp());
 }
-
-
-// class FocusApp extends StatelessWidget {
-//   const FocusApp({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Focus Tree',
-//       debugShowCheckedModeBanner: false,
-//       home: const HomePage(),
-//     );
-//   }
-// }
 
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
@@ -33,11 +23,22 @@ class FocusApp extends StatelessWidget {
     return MaterialApp(
       title: 'Focus Tree',
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          print("Snapshot state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data: ${snapshot.data?.uid}");
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasData) {
+            return const HomePage();
+          }
+          return LoginScreen();
+        },
+      ),
     );
   }
 }
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -47,7 +48,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int selectedMinutes = 10;
-
+  Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,22 +69,33 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Icon(Icons.menu, size: 30, color: Colors.white),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF25863A),
-                      borderRadius: BorderRadius.circular(30),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF25863A),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
+                          SizedBox(width: 4),
+                          Text("2000", style: TextStyle(color: Colors.white)),
+                          SizedBox(width: 4),
+                          Icon(Icons.add, color: Colors.white, size: 16),
+                        ],
+                      ),
                     ),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
-                        SizedBox(width: 4),
-                        Text("2000", style: TextStyle(color: Colors.white)),
-                        SizedBox(width: 4),
-                        Icon(Icons.add, color: Colors.white, size: 16),
-                      ],
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.white, size: 30),
+                    onPressed: () => _signOut(context),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red, // Thêm màu nền để dễ thấy
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
