@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'completion_screen.dart';
+import 'data/services/planting_session_service.dart';
+import 'package:intl/intl.dart';
 
 class CountdownScreen extends StatefulWidget {
   final int totalMinutes;
@@ -16,6 +18,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
   Timer? timer;
   AudioPlayer audioPlayer = AudioPlayer();
   bool isSoundOn = false;
+  final PlantingSessionService _sessionService = PlantingSessionService();
 
   @override
   void initState() {
@@ -33,6 +36,14 @@ class _CountdownScreenState extends State<CountdownScreen> {
       } else {
         timer.cancel();
         audioPlayer.stop();
+        // Lưu session khi hoàn thành (Thành công)
+        _sessionService.createPlantingSession(
+          duration: widget.totalMinutes,
+          status: "Thành công",
+          date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+          pointsEarned: 200,
+        );
+        // Chuyển sang CompletionScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => CompletionScreen(
@@ -105,7 +116,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
     if (isSoundOn) {
       await audioPlayer.stop();
     } else {
-      await audioPlayer.setReleaseMode(ReleaseMode.loop); // Thêm dòng này để lặp lại
+      await audioPlayer.setReleaseMode(ReleaseMode.loop);
       await audioPlayer.play(AssetSource('sound/nature.mp3'), volume: 0.5);
     }
     setState(() {
@@ -197,10 +208,22 @@ class _CountdownScreenState extends State<CountdownScreen> {
                       content: const Text('Do you really want to give up growing your tree? 😢'),
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
-                        TextButton(onPressed: () {
-                          audioPlayer.stop();
-                          Navigator.of(context).popUntil((route) => route.isFirst);
-                        }, child: const Text('Yes')),
+                        TextButton(
+                          onPressed: () {
+                            timer?.cancel(); // Dừng timer
+                            audioPlayer.stop();
+                            // Lưu session khi bỏ cuộc (Thất bại)
+                            _sessionService.createPlantingSession(
+                              duration: widget.totalMinutes,
+                              status: "Thất bại",
+                              date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                              pointsEarned: 0, // Không có điểm khi thất bại
+                            );
+                            // Quay về màn hình chính
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
+                          child: const Text('Yes'),
+                        ),
                       ],
                     ),
                   );
@@ -211,7 +234,10 @@ class _CountdownScreenState extends State<CountdownScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   elevation: 4,
                 ),
-                child: const Text("Give up", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  "Give up",
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
