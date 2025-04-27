@@ -1,29 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:focus_app/services/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'screens/circular_slider.dart';
 import 'screens/countdown_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/shop_screen.dart';
+import 'screens/achievements_screen.dart';
+import 'screens/drawer_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(const FocusApp());
+  //runApp(const FocusApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+      child: FocusApp(),
+    ),
+  );
 }
-
-
-// class FocusApp extends StatelessWidget {
-//   const FocusApp({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Focus Tree',
-//       debugShowCheckedModeBanner: false,
-//       home: const HomePage(),
-//     );
-//   }
-// }
 
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
@@ -34,6 +31,11 @@ class FocusApp extends StatelessWidget {
       title: 'Focus Tree',
       debugShowCheckedModeBanner: false,
       home: LoginScreen(),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/shop': (context) => const ShopScreen(),
+        '/achievements': (context) => const AchievementScreen(),
+      },
     );
   }
 }
@@ -47,11 +49,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int selectedMinutes = 10;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  //int coins = 2000; // Add a coins variable to track user coins
 
   @override
   Widget build(BuildContext context) {
+    final String currentRoute = ModalRoute.of(context)?.settings.name ?? '/home';
+    final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFF50B36A),
+      drawer: AppDrawer(currentRoute: currentRoute, coins: userProvider.coins),
       body: SafeArea(
         child: Column(
           children: [
@@ -61,7 +69,12 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.menu, size: 30, color: Colors.white),
+                  InkWell(
+                    onTap: () {
+                      _scaffoldKey.currentState?.openDrawer();
+                    },
+                    child: const Icon(Icons.menu, size: 30, color: Colors.white),
+                  ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -69,12 +82,12 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
-                      children: const [
-                        Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
-                        SizedBox(width: 4),
-                        Text("2000", style: TextStyle(color: Colors.white)),
-                        SizedBox(width: 4),
-                        Icon(Icons.add, color: Colors.white, size: 16),
+                      children: [
+                        const Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
+                        const SizedBox(width: 4),
+                        Text("${userProvider.coins}", style: const TextStyle(color: Colors.white)),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.add, color: Colors.white, size: 16),
                       ],
                     ),
                   )
