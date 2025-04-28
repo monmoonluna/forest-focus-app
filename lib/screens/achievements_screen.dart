@@ -23,9 +23,9 @@ class AchievementScreen extends StatefulWidget {
 class _AchievementScreenState extends State<AchievementScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // Danh sách thành tựu (không lưu trạng thái isUnlocked nữa)
+  // Danh sách thành tựu
   final List<Achievement> achievements = [
-    Achievement(title: 'Novice Planter', description: 'Total focused time reaches 4 hours (0/4)'),
+    Achievement(title: 'Novice Planter', description: 'Total focused time reaches 4 hours'),
     Achievement(title: 'Green Thumb', description: 'Plant 10 trees in the app'),
     Achievement(title: 'Forest Keeper', description: 'Reach 50 hours of focused time'),
     Achievement(title: 'Eco Warrior', description: 'Unlock 5 different tree types'),
@@ -35,7 +35,8 @@ class _AchievementScreenState extends State<AchievementScreen> {
 
   void _claimAchievement(int index, Achievement achievement) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.achievementsStatus[index]) {
+    if (!userProvider.achievementsStatus[index] &&
+        userProvider.currentProgress[index] >= userProvider.requiredProgress[index]) {
       userProvider.unlockAchievement(index); // Gọi hàm unlock từ UserProvider
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -44,11 +45,19 @@ class _AchievementScreenState extends State<AchievementScreen> {
           duration: const Duration(seconds: 2),
         ),
       );
-    } else {
+    } else if (userProvider.achievementsStatus[index]) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${achievement.title} already claimed'),
           backgroundColor: Colors.grey,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Not enough progress to claim ${achievement.title}'),
+          backgroundColor: Colors.red,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -113,14 +122,24 @@ class _AchievementScreenState extends State<AchievementScreen> {
         itemCount: achievements.length,
         itemBuilder: (context, index) {
           final achievement = achievements[index];
-          final isUnlocked = userProvider.achievementsStatus[index]; // Lấy trạng thái từ UserProvider
-          return _buildAchievementCard(achievement, index, isUnlocked);
+          final isUnlocked = userProvider.achievementsStatus[index];
+          final currentProgress = userProvider.currentProgress[index];
+          final requiredProgress = userProvider.requiredProgress[index];
+          return _buildAchievementCard(
+              achievement, index, isUnlocked, currentProgress, requiredProgress);
         },
       ),
     );
   }
 
-  Widget _buildAchievementCard(Achievement achievement, int index, bool isUnlocked) {
+  Widget _buildAchievementCard(Achievement achievement, int index, bool isUnlocked,
+      int currentProgress, int requiredProgress) {
+    // Cập nhật description để hiển thị tiến trình động
+    final displayDescription = achievement.description.contains('(0/')
+        ? achievement.description.replaceFirst(
+        RegExp(r'\(0/\d+\)'), '($currentProgress/$requiredProgress)')
+        : '${achievement.description} ($currentProgress/$requiredProgress)';
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -165,7 +184,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              achievement.description,
+              displayDescription,
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.black54,

@@ -25,10 +25,10 @@ class _ShopScreenState extends State<ShopScreen> {
   final List<ShopItem> shopItems = [
     ShopItem(name: 'Golden Tree', price: 2000, imagePath: 'assets/images/golden_tree.png'),
     ShopItem(name: 'Tangerine Tree', price: 1000, imagePath: 'assets/images/tangerine_tree.png'),
-    ShopItem(name: 'Crystal Tree', price: 3000, imagePath: 'assets/images/golden_tree.png'),
-    ShopItem(name: 'Cherry Tree', price: 1500, imagePath: 'assets/images/tangerine_tree.png'),
-    ShopItem(name: 'Rainbow Tree', price: 5000, imagePath: 'assets/images/golden_tree.png'),
-    ShopItem(name: 'Oak Tree', price: 800, imagePath: 'assets/images/tangerine_tree.png'),
+    ShopItem(name: 'Crystal Tree', price: 3000, imagePath: 'assets/images/crystal_tree.png'),
+    ShopItem(name: 'Celestial Tree', price: 1500, imagePath: 'assets/images/celestial_tree.png'),
+    ShopItem(name: 'Balloon Flower', price: 5000, imagePath: 'assets/images/balloon_flower.png'),
+    ShopItem(name: 'Geraniums Flower', price: 800, imagePath: 'assets/images/geraniums_flower.png'),
   ];
 
   void _purchaseItem(BuildContext context, ShopItem item) {
