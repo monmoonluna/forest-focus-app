@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../data/services/planting_session_service.dart';
+import '../services/planting_session_service.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -80,7 +80,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       });
     } catch (e) {
       setState(() {
-        error = e.toString();
+        error = 'Không thể tải lịch sử: $e';
         isLoading = false;
       });
     }
@@ -105,10 +105,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           backgroundColor: const Color(0xFF50B36A),
         ),
         body: Center(
-          child: Text(
-            error!,
-            style: const TextStyle(color: Colors.red, fontSize: 16),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, size: 80, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
+            ],
           ),
         ),
       );

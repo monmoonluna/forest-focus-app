@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'completion_screen.dart';
-import 'data/services/planting_session_service.dart';
+import '../services/planting_session_service.dart';
 import 'package:intl/intl.dart';
 
 class CountdownScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
   }
 
   void startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (remainingSeconds > 0) {
         setState(() {
           remainingSeconds--;
@@ -37,20 +37,26 @@ class _CountdownScreenState extends State<CountdownScreen> {
         timer.cancel();
         audioPlayer.stop();
         // Lưu session khi hoàn thành (Thành công)
-        _sessionService.createPlantingSession(
+        String? error = await _sessionService.createPlantingSession(
           duration: widget.totalMinutes,
           status: "Thành công",
           date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
           pointsEarned: 200,
         );
-        // Chuyển sang CompletionScreen
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CompletionScreen(
-              treeImage: getTreeImage(0, widget.totalMinutes * 60),
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
+          );
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => CompletionScreen(
+                treeImage: getTreeImage(0, widget.totalMinutes * 60),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     });
   }
@@ -148,8 +154,6 @@ class _CountdownScreenState extends State<CountdownScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-
-              // Tree image with animation
               Container(
                 width: 230,
                 height: 230,
@@ -175,18 +179,12 @@ class _CountdownScreenState extends State<CountdownScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Countdown time
               Text(
                 formatTime(remainingSeconds),
                 style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-
               const SizedBox(height: 20),
-
-              // Sound toggle
               IconButton(
                 onPressed: toggleSound,
                 icon: Icon(
@@ -195,10 +193,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                   size: 32,
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Give up button
               ElevatedButton(
                 onPressed: () {
                   showDialog(
@@ -209,17 +204,20 @@ class _CountdownScreenState extends State<CountdownScreen> {
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(context), child: const Text('No')),
                         TextButton(
-                          onPressed: () {
-                            timer?.cancel(); // Dừng timer
+                          onPressed: () async {
+                            timer?.cancel();
                             audioPlayer.stop();
-                            // Lưu session khi bỏ cuộc (Thất bại)
-                            _sessionService.createPlantingSession(
+                            String? error = await _sessionService.createPlantingSession(
                               duration: widget.totalMinutes,
                               status: "Thất bại",
                               date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                              pointsEarned: 0, // Không có điểm khi thất bại
+                              pointsEarned: 0,
                             );
-                            // Quay về màn hình chính
+                            if (error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(error), backgroundColor: Colors.red),
+                              );
+                            }
                             Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                           child: const Text('Yes'),
