@@ -4,7 +4,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.google.gms:google-services:4.3.10") // Add this line
     }
 }
 
@@ -25,5 +24,5 @@ tasks.register<Delete>("clean") {
 }
 
 plugins {
-    id("com.google.gms.google-services") version "4.4.2" apply false
+    id("com.google.gms.google-services") version "4.3.15" apply false
 }

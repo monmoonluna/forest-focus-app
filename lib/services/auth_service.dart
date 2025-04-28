@@ -5,16 +5,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Đăng nhập
+  // Đăng nhập bằng email và mật khẩu
   Future<User?> signIn({required String email, required String password}) async {
     try {
-      // Đăng nhập người dùng
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // Trả về người dùng nếu đăng nhập thành công
       return result.user;
     } catch (e) {
       print("Lỗi đăng nhập: $e");
@@ -42,7 +39,7 @@ class AuthService {
       // Lưu thông tin người dùng vào Firestore
       await _firestore.collection('users').doc(user.uid).set({
         'email': email,
-        'name': name, // Thêm trường name
+        'name': name,
         'points': 0,
         'createdAt': FieldValue.serverTimestamp(),
         'user_id': user.uid,
@@ -61,11 +58,12 @@ class AuthService {
     }
   }
 
-
+  // Đăng xuất
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
+  // Lấy người dùng hiện tại
   User? getCurrentUser() {
     return _auth.currentUser;
   }

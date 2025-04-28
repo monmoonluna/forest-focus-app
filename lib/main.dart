@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'screens/circular_slider.dart';
 import 'screens/countdown_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
-import 'presentation/screens/statistics_screen.dart';
-import 'data/services/auth_service.dart';
+import 'screens/statistics_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  // Đăng xuất người dùng khi khởi động (tùy chọn)
-  await FirebaseAuth.instance.signOut();
-  print("Current user after sign out: ${FirebaseAuth.instance.currentUser?.uid}");
   runApp(const FocusApp());
 }
 
@@ -28,14 +24,13 @@ class FocusApp extends StatelessWidget {
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
-          print("Snapshot state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data: ${snapshot.data?.uid}");
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasData) {
             return const HomePage();
           }
-          return LoginScreen();
+          return const LoginScreen();
         },
       ),
     );
@@ -51,13 +46,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int selectedMinutes = 10;
+
   Future<void> _signOut(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => LoginScreen()),
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,13 +62,20 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.menu, size: 30, color: Colors.white),
+                  IconButton(
+                    icon: const Icon(Icons.menu, size: 30, color: Colors.white),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const StatisticsScreen()),
+                      );
+                    },
+                  ),
                   Flexible(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -96,21 +100,17 @@ class _HomePageState extends State<HomePage> {
                     icon: const Icon(Icons.logout, color: Colors.white, size: 30),
                     onPressed: () => _signOut(context),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.red, // Thêm màu nền để dễ thấy
+                      backgroundColor: Colors.red,
                     ),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 10),
-
-            // Main content - chiếm toàn bộ phần còn lại
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // "Start planting!" gần sát vòng tròn
                   const Text(
                     "Start planting!",
                     style: TextStyle(
@@ -119,8 +119,6 @@ class _HomePageState extends State<HomePage> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-
-                  // Vòng tròn + cây
                   CircularTimePicker(
                     onChanged: (value) {
                       setState(() {
@@ -128,11 +126,8 @@ class _HomePageState extends State<HomePage> {
                       });
                     },
                   ),
-
-                  // Phần bên dưới vòng tròn
                   Column(
                     children: [
-                      // Tag Study
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
                         decoration: BoxDecoration(
@@ -151,10 +146,7 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Timer text
                       Text(
                         "${selectedMinutes.toString().padLeft(2, '0')}:00",
                         style: const TextStyle(
@@ -163,10 +155,7 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.white,
                         ),
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Button Plant
                       ElevatedButton(
                         onPressed: () {
                           Navigator.push(
