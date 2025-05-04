@@ -40,9 +40,13 @@ class AuthService {
       await _firestore.collection('users').doc(user.uid).set({
         'email': email,
         'name': name,
-        'points': 0,
-        'createdAt': FieldValue.serverTimestamp(),
         'user_id': user.uid,
+        'coins': 2000,
+        'purchasedItems': [],
+        'achievementsStatus': List.filled(6, false),
+        'currentProgress': [2, 0, 0, 0, 0, 0], // Novice Planter starts with 2/4 progress
+        'requiredProgress': [4, 10, 50, 5, 100, 7],
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
       // Tạo lịch sử người dùng
@@ -60,7 +64,11 @@ class AuthService {
 
   // Đăng xuất
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      print("Lỗi đăng xuất: $e");
+    }
   }
 
   // Lấy người dùng hiện tại
