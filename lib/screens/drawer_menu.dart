@@ -68,6 +68,13 @@ class AppDrawer extends StatelessWidget {
               route: '/achievements',
               isSelected: currentRoute == '/achievements',
             ),
+            _buildDrawerItem(
+              context: context,
+              icon: Icons.add_chart,
+              text: 'Statistics',
+              route: '/statistics',
+              isSelected: currentRoute == '/statistics',
+            ),
             const Divider(color: Colors.white70),
             _buildDrawerItem(
               context: context,

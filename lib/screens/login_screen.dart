@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 80,
                 decoration: const ShapeDecoration(
                   image: DecorationImage(
-                    image: AssetImage("assets/tree.png"),
+                    image: AssetImage("assets/images/tree.png"),
                     fit: BoxFit.fill,
                   ),
                   shape: OvalBorder(),
