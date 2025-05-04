@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:focus_app/services/user_provider.dart';
 import 'login_screen.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -13,6 +15,9 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final String displayName = userProvider.displayName ?? 'Phonn Phamm';
+
     return Drawer(
       child: Container(
         color: const Color(0xFF3C8F52),
@@ -26,14 +31,27 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Color(0xFF25863A),
-                    ),
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Color(0xFF25863A),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   const Text(
@@ -48,8 +66,8 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
             _buildDrawerItem(
-              context: context
-              ,icon: Icons.home,
+              context: context,
+              icon: Icons.home,
               text: 'Home',
               route: '/home',
               isSelected: currentRoute == '/home' || currentRoute == '/',

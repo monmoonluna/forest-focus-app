@@ -64,16 +64,7 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
   }
 
   void _showCompletionDialog() {
-    int gold = 0;
-    if (widget.totalMinutes >= 120) {
-      gold = 100;
-    } else if (widget.totalMinutes >= 90) {
-      gold = 75;
-    } else if (widget.totalMinutes >= 60) {
-      gold = 50;
-    } else {
-      gold = 25;
-    }
+    int gold = (widget.totalMinutes ~/ 10) * 100;
     showDialog(
       context: context,
       barrierDismissible: false,

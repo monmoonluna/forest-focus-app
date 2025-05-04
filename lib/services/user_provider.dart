@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserProvider extends ChangeNotifier {
   int _coins = 2000; // Default starting coins
+  String _displayName = 'Anonymous'; // Default display name
   List<String> _purchasedItems = []; // Items bought in shop
   List<bool> _achievementsStatus = List<bool>.filled(6, false); // Achievement unlocked status
   List<int> _currentProgress = List<int>.filled(6, 0); // Current progress for each achievement
@@ -15,6 +16,7 @@ class UserProvider extends ChangeNotifier {
 
   // Getters
   int get coins => _coins;
+  String get displayName => _displayName;
   List<String> get purchasedItems => List.unmodifiable(_purchasedItems);
   List<bool> get achievementsStatus => List.unmodifiable(_achievementsStatus);
   List<int> get currentProgress => List.unmodifiable(_currentProgress);
@@ -36,6 +38,7 @@ class UserProvider extends ChangeNotifier {
       DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
       if (doc.exists) {
         _coins = doc.get('coins') ?? 2000;
+        _displayName = doc.get('display_name') ?? 'Anonymous';
         _purchasedItems = List<String>.from(doc.get('purchasedItems') ?? []);
         _achievementsStatus = List<bool>.from(doc.get('achievementsStatus') ?? List.filled(6, false));
         _currentProgress = List<int>.from(doc.get('currentProgress') ?? [2, 0, 0, 0, 0, 0]);
@@ -72,6 +75,7 @@ class UserProvider extends ChangeNotifier {
 
       await _firestore.collection('users').doc(user.uid).set({
         'coins': _coins,
+        'display_name': _displayName,
         'purchasedItems': _purchasedItems,
         'achievementsStatus': _achievementsStatus,
         'currentProgress': _currentProgress,
@@ -127,6 +131,7 @@ class UserProvider extends ChangeNotifier {
   /// Reset user data (for testing or logout)
   Future<void> resetUserData() async {
     _coins = 2000;
+    _displayName = 'Anonymous';
     _purchasedItems.clear();
     _achievementsStatus = List<bool>.filled(_achievementsStatus.length, false);
     _currentProgress = [2, 0, 0, 0, 0, 0]; // Reset with initial progress for Novice Planter
