@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserProvider extends ChangeNotifier {
   int _coins = 2000; // Default starting coins
@@ -7,6 +8,10 @@ class UserProvider extends ChangeNotifier {
   List<bool> _achievementsStatus = List<bool>.filled(6, false); // Achievement unlocked status
   List<int> _currentProgress = List<int>.filled(6, 0); // Current progress for each achievement
   List<int> _requiredProgress = [4, 10, 50, 5, 100, 7]; // Initial required progress for each achievement
+
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Getters
   int get coins => _coins;
@@ -19,45 +24,58 @@ class UserProvider extends ChangeNotifier {
     _loadUserData();
   }
 
-  // Load user data (coins, purchases, achievements, progress) from SharedPreferences
+  // Load user data from Firestore
   Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    _coins = prefs.getInt('coins') ?? 2000;
-    //_coins = 2000; // Forced to 2000 as per your code
-    _purchasedItems = prefs.getStringList('purchasedItems') ?? [];
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) {
+        print("Không có người dùng đăng nhập");
+        return;
+      }
 
-    final savedAchiev = prefs.getStringList('achievementsStatus');
-    if (savedAchiev != null && savedAchiev.length == _achievementsStatus.length) {
-      _achievementsStatus = savedAchiev.map((e) => e == 'true').toList();
+      DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
+
+      if (doc.exists) {
+        // Load data from Firestore if exists
+        _coins = doc.get('coins') ?? 2000;
+        _purchasedItems = List<String>.from(doc.get('purchasedItems') ?? []);
+        _achievementsStatus = List<bool>.from(doc.get('achievementsStatus') ?? List.filled(6, false));
+        _currentProgress = List<int>.from(doc.get('currentProgress') ?? [2, 0, 0, 0, 0, 0]);
+        _requiredProgress = List<int>.from(doc.get('requiredProgress') ?? [4, 10, 50, 5, 100, 7]);
+      } else {
+        // Thông báo lỗi nếu tài liệu không tồn tại
+        print("Tài liệu người dùng không tồn tại, yêu cầu đăng ký lại");
+        return;
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print("Lỗi tải dữ liệu người dùng: $e");
+      // Có thể thêm callback để thông báo lỗi cho UI
     }
-
-    final savedProgress = prefs.getStringList('currentProgress');
-    if (savedProgress != null && savedProgress.length == _currentProgress.length) {
-      _currentProgress = savedProgress.map((e) => int.parse(e)).toList();
-      _currentProgress[0] = 4;
-    } else {
-      // Set initial progress for Novice Planter (index 0) to 2
-      _currentProgress[0] = 2; // Novice Planter starts with 2/4 progress
-    }
-
-    final savedRequired = prefs.getStringList('requiredProgress');
-    if (savedRequired != null && savedRequired.length == _requiredProgress.length) {
-      _requiredProgress = savedRequired.map((e) => int.parse(e)).toList();
-    } else {
-      _requiredProgress = [4, 10, 50, 5, 100, 7]; // Default requirements
-    }
-
-    notifyListeners();
   }
 
-  // Save user data to SharedPreferences
+  // Save user data to Firestore
   Future<void> _saveUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('coins', _coins);
-    await prefs.setStringList('purchasedItems', _purchasedItems);
-    await prefs.setStringList('achievementsStatus', _achievementsStatus.map((e) => e ? 'true' : 'false').toList());
-    await prefs.setStringList('currentProgress', _currentProgress.map((e) => e.toString()).toList());
-    await prefs.setStringList('requiredProgress', _requiredProgress.map((e) => e.toString()).toList());
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) {
+        print("Không có người dùng đăng nhập, không thể lưu dữ liệu");
+        return;
+      }
+
+      await _firestore.collection('users').doc(user.uid).set({
+        'coins': _coins,
+        'purchasedItems': _purchasedItems,
+        'achievementsStatus': _achievementsStatus,
+        'currentProgress': _currentProgress,
+        'requiredProgress': _requiredProgress,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print("Lỗi lưu dữ liệu người dùng: $e");
+      // Có thể thêm callback để thông báo lỗi cho UI
+    }
   }
 
   /// Increase coin balance and persist
@@ -93,7 +111,6 @@ class UserProvider extends ChangeNotifier {
         !_achievementsStatus[index] &&
         _currentProgress[index] >= _requiredProgress[index]) {
       _achievementsStatus[index] = true;
-      _currentProgress[index] = _currentProgress[index]; // Reset progress after unlock
       _requiredProgress[index] *= 2; // Double the requirement for next unlock
       addCoins(100); // Reward coins on unlock
       _saveUserData();
@@ -106,8 +123,7 @@ class UserProvider extends ChangeNotifier {
     _coins = 2000;
     _purchasedItems.clear();
     _achievementsStatus = List<bool>.filled(_achievementsStatus.length, false);
-    _currentProgress = List<int>.filled(_currentProgress.length, 0);
-    _currentProgress[0] = 2; // Reset with initial progress for Novice Planter
+    _currentProgress = [2, 0, 0, 0, 0, 0]; // Reset with initial progress for Novice Planter
     _requiredProgress = [4, 10, 50, 5, 100, 7]; // Reset to initial requirements
     await _saveUserData();
     notifyListeners();
