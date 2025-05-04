@@ -5,6 +5,8 @@ import 'completion_screen.dart';
 import 'giveup_screen.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:intl/intl.dart';
+import '../services/planting_session_service.dart';
 
 class CountdownScreen extends StatefulWidget {
   final int totalMinutes;
@@ -23,11 +25,12 @@ class CountdownScreen extends StatefulWidget {
   State<CountdownScreen> createState() => _CountdownScreenState();
 }
 
-class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingObserver{
+class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingObserver {
   late int remainingSeconds;
   Timer? timer;
   AudioPlayer audioPlayer = AudioPlayer();
   bool isSoundOn = false;
+  final PlantingSessionService _sessionService = PlantingSessionService();
 
   int cancelCountdown = 10;
   bool isCancelable = true;
@@ -41,7 +44,6 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     startTimer();
     startCancelTimer();
     _checkOverlayPermission();
-
   }
 
   void startCancelTimer() {
@@ -69,6 +71,14 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
         timer.cancel();
         cancelTimer.cancel();
         audioPlayer.stop();
+        // Lưu session khi hoàn thành (Thành công)
+        _sessionService.createPlantingSession(
+          duration: widget.totalMinutes,
+          status: "Thành công",
+          date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+          pointsEarned: widget.totalMinutes >= 120 ? 100 : widget.totalMinutes >= 90 ? 75 : widget.totalMinutes >= 60 ? 50 : 25,
+        );
+        // Chuyển sang CompletionScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => CompletionScreen(
@@ -165,7 +175,6 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     if (!await FlutterOverlayWindow.isPermissionGranted()) {
       bool? granted = await FlutterOverlayWindow.requestPermission();
       if (granted != true) {
-        // Xử lý khi quyền bị từ chối
         print("Overlay permission denied");
       }
     }
@@ -207,8 +216,18 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
               const SizedBox(width: 16),
               ElevatedButton(
                 onPressed: () {
+                  timer?.cancel();
+                  cancelTimer.cancel();
                   audioPlayer.stop();
                   Navigator.pop(context);
+                  // Lưu session khi bỏ cuộc (Thất bại)
+                  _sessionService.createPlantingSession(
+                    duration: widget.totalMinutes - (remainingSeconds ~/ 60),
+                    status: "Thất bại",
+                    date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
+                    pointsEarned: 0,
+                  );
+                  // Chuyển sang GiveUpScreen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -245,6 +264,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
       _closeOverlay();
     }
   }
+
   Future<void> _closeOverlay() async {
     if (await FlutterOverlayWindow.isActive()) {
       await FlutterOverlayWindow.closeOverlay();
@@ -255,13 +275,11 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     if (await FlutterOverlayWindow.isPermissionGranted()) {
       final platformDispatcher = WidgetsBinding.instance.platformDispatcher;
 
-      // Kiểm tra xem có view nào không
       if (platformDispatcher.views.isEmpty) {
         print('No FlutterView available');
         return;
       }
 
-      // Lấy view đầu tiên
       final view = platformDispatcher.views.first;
       final screenSize = view.physicalSize / view.devicePixelRatio;
       final screenWidth = screenSize.width.toInt();
@@ -359,8 +377,6 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                       style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     const SizedBox(height: 30),
-
-                    // Dynamic Cancel or Give up button
                     ElevatedButton(
                       onPressed: () {
                         isCancelable ? handleCancel() : handleGiveUp();
