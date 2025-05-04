@@ -32,26 +32,32 @@ class UserProvider extends ChangeNotifier {
         print("Không có người dùng đăng nhập");
         return;
       }
-
+      await user.reload(); // Đảm bảo xác thực
       DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
-
       if (doc.exists) {
-        // Load data from Firestore if exists
         _coins = doc.get('coins') ?? 2000;
         _purchasedItems = List<String>.from(doc.get('purchasedItems') ?? []);
         _achievementsStatus = List<bool>.from(doc.get('achievementsStatus') ?? List.filled(6, false));
         _currentProgress = List<int>.from(doc.get('currentProgress') ?? [2, 0, 0, 0, 0, 0]);
         _requiredProgress = List<int>.from(doc.get('requiredProgress') ?? [4, 10, 50, 5, 100, 7]);
       } else {
-        // Thông báo lỗi nếu tài liệu không tồn tại
-        print("Tài liệu người dùng không tồn tại, yêu cầu đăng ký lại");
-        return;
+        print("Tài liệu người dùng không tồn tại, tạo mới...");
+        await _firestore.collection('users').doc(user.uid).set({
+          'user_id': user.uid,
+          'email': user.email,
+          'display_name': user.displayName ?? 'Anonymous',
+          'coins': 2000,
+          'purchasedItems': [],
+          'achievementsStatus': List.filled(6, false),
+          'currentProgress': [2, 0, 0, 0, 0, 0],
+          'requiredProgress': [4, 10, 50, 5, 100, 7],
+          'created_at': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }
-
       notifyListeners();
     } catch (e) {
       print("Lỗi tải dữ liệu người dùng: $e");
-      // Có thể thêm callback để thông báo lỗi cho UI
     }
   }
 
