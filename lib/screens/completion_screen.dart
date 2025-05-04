@@ -4,7 +4,17 @@ import 'dart:math';
 
 class CompletionScreen extends StatefulWidget {
   final String treeImage;
-  const CompletionScreen({super.key, required this.treeImage});
+  final String tag;
+  final int totalMinutes;
+  final Color tagColor;
+
+  const CompletionScreen({
+    super.key,
+    required this.treeImage,
+    required this.tag,
+    required this.totalMinutes,
+    required this.tagColor,
+  });
 
   @override
   State<CompletionScreen> createState() => _CompletionScreenState();
@@ -15,6 +25,7 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
   final List<Leaf> _leaves = [];
   late AnimationController _leafController;
   final Random _random = Random();
+  bool _showDialog = true;
 
   @override
   void initState() {
@@ -30,6 +41,7 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
   void didChangeDependencies() {
     super.didChangeDependencies();
     _startFallingLeaves();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showCompletionDialog());
   }
 
   void _playSuccessSound() async {
@@ -51,6 +63,58 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
     }
   }
 
+  void _showCompletionDialog() {
+    int gold = 0;
+    if (widget.totalMinutes >= 120) {
+      gold = 100;
+    } else if (widget.totalMinutes >= 90) {
+      gold = 75;
+    } else if (widget.totalMinutes >= 60) {
+      gold = 50;
+    } else {
+      gold = 25;
+    }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('🎉 Congratulations!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(widget.treeImage, width: 200, height: 200),
+              const SizedBox(height: 16),
+              Text('You earned $gold gold! 💰'),
+            ],
+          ),
+          actions: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF50B36A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 4,
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _leafController.dispose();
@@ -61,7 +125,7 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF50B36A),
+      backgroundColor: const Color(0xFF46AE71),
       body: Stack(
         children: [
           Center(
@@ -75,7 +139,26 @@ class _CompletionScreenState extends State<CompletionScreen> with TickerProvider
                 ),
                 const SizedBox(height: 24),
                 Image.asset(widget.treeImage, width: 250, height: 250),
-                const SizedBox(height: 24),
+                const SizedBox(height: 30),
+                  Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: widget.tagColor.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2)),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.fiber_manual_record, color: widget.tagColor, size: 14),
+                      const SizedBox(width: 6),
+                      Text(widget.tag, style: const TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
                 ElevatedButton.icon(
                   onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
                   icon: const Icon(Icons.arrow_back),
