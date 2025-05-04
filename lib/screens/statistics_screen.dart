@@ -161,10 +161,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: const Text('Lịch sử cây trồng'),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
+        appBar: AppBar(
+          title: const Text('Lịch sử cây trồng'),
+          leading: IconButton(
+            icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         backgroundColor: const Color(0xFF50B36A),
