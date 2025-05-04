@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'screens/circular_slider.dart';
 import 'screens/countdown_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
-import 'screens/statistics_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/overlay.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
   runApp(const FocusApp());
 }
-
+@pragma('vm:entry-point')
+void overlayMain() {
+  runApp(OverlayApp());
+}
 class FocusApp extends StatelessWidget {
   const FocusApp({super.key});
 
@@ -21,18 +22,7 @@ class FocusApp extends StatelessWidget {
     return MaterialApp(
       title: 'Focus Tree',
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasData) {
-            return const HomePage();
-          }
-          return const LoginScreen();
-        },
-      ),
+      home: const HomePage(),
     );
   }
 }
@@ -44,148 +34,332 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   int selectedMinutes = 10;
+  String selectedTag = "Study";
+  bool isDrawerOpen = false;
+  late AnimationController _controller;
+  late Animation<Offset> _drawerSlide;
+  bool isDeepFocus = false;
 
-  Future<void> _signOut(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+  final List<String> availableTags = [
+    "Study", "Work", "Social", "Rest", "Entertainment", "Sport", "Other", "Unset",
+  ];
+
+  final Map<String, Color> tagColors = {
+    "Study": Colors.blue,
+    "Work": Colors.orange,
+    "Social": Colors.purple,
+    "Rest": Colors.green,
+    "Entertainment": Colors.pink,
+    "Sport": Colors.greenAccent,
+    "Other": Colors.brown,
+    "Unset": Colors.grey,
+  };
+
+  void _showTagSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: availableTags.map((tag) {
+              return ChoiceChip(
+                label: Text(tag),
+                selected: selectedTag == tag,
+                selectedColor: tagColors[tag]?.withOpacity(0.2),
+                backgroundColor: Colors.grey[200],
+                labelStyle: TextStyle(
+                  color: selectedTag == tag ? tagColors[tag] : Colors.black,
+                ),
+                shape: StadiumBorder(
+                  side: BorderSide(
+                    color: tagColors[tag] ?? Colors.black,
+                    width: selectedTag == tag ? 2 : 1,
+                  ),
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    selectedTag = tag;
+                  });
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: const Duration(milliseconds: 400), vsync: this);
+    _drawerSlide = Tween<Offset>(begin: const Offset(-1.0, 0.0), end: Offset.zero).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  void _toggleDrawer() {
+    setState(() {
+      isDrawerOpen = !isDrawerOpen;
+      isDrawerOpen ? _controller.forward() : _controller.reverse();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Widget buildDrawer() {
+    return SlideTransition(
+      position: _drawerSlide,
+      child: Material(
+        child: Container(
+          width: 250,
+          height: MediaQuery.of(context).size.height,
+          color: const Color(0xFF46AE71),
+          child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Color(0xFF46AE71),
+                    ),
+                    child: Text(
+                      "Menu",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      children: const [
+                        ListTile(
+                          leading: Icon(Icons.account_circle, color: Colors.white),
+                          title: Text("Account", style: TextStyle(color: Colors.white)),
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.history, color: Colors.white),
+                          title: Text("Focus History", style: TextStyle(color: Colors.white)),
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.settings, color: Colors.white),
+                          title: Text("Setting", style: TextStyle(color: Colors.white)),
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.info, color: Colors.white),
+                          title: Text("About", style: TextStyle(color: Colors.white)),
+                        ),
+                        Divider(color: Colors.white70),
+                        ListTile(
+                          leading: Icon(Icons.logout, color: Colors.white),
+                          title: Text("Log out", style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeepFocusDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text("Deep Focus Mode", textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "When enabled, switching apps will trigger a warning.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Deep Focus", style: TextStyle(fontSize: 16)),
+                  Switch(
+                    value: isDeepFocus,
+                    onChanged: (value) {
+                      setState(() {
+                        isDeepFocus = value;
+                      });
+                      Navigator.of(context).pop(); // Đóng dialog sau khi chọn
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  Widget buildCoinDisplay() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        children: [
+          Image.asset('assets/images/coin.png', width: 28, height: 28),
+          const SizedBox(width: 6),
+          const Text("2000", style: TextStyle(fontSize: 15, color: Colors.white, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 4),
+          Container(
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.greenAccent,
+            ),
+            child: const Icon(Icons.add, size: 16, color: Colors.white),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF50B36A),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.menu, size: 30, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const StatisticsScreen()),
-                      );
-                    },
-                  ),
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF25863A),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.monetization_on, color: Colors.yellow, size: 18),
-                          SizedBox(width: 4),
-                          Text("2000", style: TextStyle(color: Colors.white)),
-                          SizedBox(width: 4),
-                          Icon(Icons.add, color: Colors.white, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.white, size: 30),
-                    onPressed: () => _signOut(context),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Text(
-                    "Start planting!",
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  CircularTimePicker(
-                    onChanged: (value) {
-                      setState(() {
-                        selectedMinutes = value;
-                      });
-                    },
-                  ),
-                  Column(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFF46AE71),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black12,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2))
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.fiber_manual_record, color: Colors.red, size: 14),
-                            SizedBox(width: 6),
-                            Text("Study", style: TextStyle(color: Colors.white)),
-                          ],
-                        ),
+                      GestureDetector(
+                        onTap: _toggleDrawer,
+                        child: const Icon(Icons.menu, size: 40, color: Colors.white),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "${selectedMinutes.toString().padLeft(2, '0')}:00",
-                        style: const TextStyle(
-                          fontSize: 50,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      GestureDetector(
+                        onTap: _showDeepFocusDialog,
+                        child: const Icon(Icons.hourglass_top, size: 36, color: Colors.white),
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CountdownScreen(totalMinutes: selectedMinutes),
-                            ),
-                          );
+                      buildCoinDisplay(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      const Text("Start planting!",
+                          style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.w500)),
+                      CircularTimePicker(
+                        onChanged: (value) {
+                          setState(() {
+                            selectedMinutes = value;
+                          });
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00C853),
-                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      ),
+                      Column(
+                        children: [
+                          GestureDetector(
+                            onTap: _showTagSelector,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: tagColors[selectedTag]?.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: const [
+                                  BoxShadow(color: Colors.black26, blurRadius: 2, offset: Offset(1, 2)),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.fiber_manual_record, color: tagColors[selectedTag], size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(selectedTag, style: const TextStyle(color: Colors.white)),
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.edit, color: Colors.white, size: 16),
+                                ],
+                              ),
+                            ),
                           ),
-                          elevation: 4,
-                        ),
-                        child: const Text(
-                          "Plant",
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "${selectedMinutes.toString().padLeft(2, '0')}:00",
+                            style: const TextStyle(fontSize: 60, fontWeight: FontWeight.normal, color: Colors.white),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CountdownScreen(
+                                    totalMinutes: selectedMinutes,
+                                    tag: selectedTag,
+                                    tagColor: tagColors[selectedTag] ?? Colors.white,
+                                    isDeepFocus: isDeepFocus,
+                                  ),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00C853),
+                              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 4,
+                            ),
+                            child: const Text(
+                              "Plant",
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.normal),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        if (isDrawerOpen)
+          GestureDetector(
+            onTap: _toggleDrawer,
+            child: Container(color: Colors.black.withOpacity(0.3)),
+          ),
+        buildDrawer(),
+      ],
     );
   }
 }

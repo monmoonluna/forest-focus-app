@@ -36,12 +36,14 @@ dependencies:
   google_fonts: ^6.2.0
   fl_chart: ^0.68.0
   intl: ^0.19.0
-  audioplayers: ^5.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
+  audioplayers: ^6.4.0
+  flutter_overlay_window: ^0.4.0
+  permission_handler: ^11.0.0
+  android_intent_plus: ^5.3.0
 
 dev_dependencies:
   flutter_test:
@@ -65,18 +67,21 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/tree.png
-    - assets/tree_stage_1.png
-    - assets/tree_stage_2.png
-    - assets/tree_stage_3.png
-    - assets/tree_stage_4.png
-    - assets/tree_stage_5.png
-    - assets/tree_stage_6.png
-    - assets/tree_stage_7.png
+    - assets/images/tree.png
+    - assets/images/tree_stage_1.png
+    - assets/images/tree_stage_2.png
+    - assets/images/tree_stage_3.png
+    - assets/images/tree_stage_4.png
+    - assets/images/tree_stage_5.png
+    - assets/images/tree_stage_6.png
+    - assets/images/tree_stage_7.png
     - assets/sound/nature.mp3
-    - assets/leaf1.png
-    - assets/leaf.png
+    - assets/images/leaf1.png
+    - assets/images/leaf.png
     - assets/sound/success.mp3
+    - assets/images/withered_tree.png
+    - assets/sound/failure.mp3
+    - assets/images/coin.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

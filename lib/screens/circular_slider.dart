@@ -17,7 +17,7 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
   late AnimationController _controller;
 
   int selectedMinutes = 10;
-  String treeAsset = 'assets/tree_stage_4.png';
+  String treeAsset = 'assets/images/tree_stage_4.png';
 
   @override
   void initState() {
@@ -70,10 +70,10 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
   }
 
   String getTreeImage(int minutes) {
-    if (minutes >= 120) return 'assets/tree_stage_7.png';
-    if (minutes >= 90) return 'assets/tree_stage_6.png';
-    if (minutes >= 60) return 'assets/tree_stage_5.png';
-    return 'assets/tree_stage_4.png';
+    if (minutes >= 120) return 'assets/images/tree_stage_7.png';
+    if (minutes >= 90) return 'assets/images/tree_stage_6.png';
+    if (minutes >= 60) return 'assets/images/tree_stage_5.png';
+    return 'assets/images/tree_stage_4.png';
   }
 
   @override
