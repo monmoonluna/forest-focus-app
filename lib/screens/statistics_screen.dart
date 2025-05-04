@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../services/planting_session_service.dart';
+import 'package:focus_app/services/planting_session_service.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:focus_app/services/user_provider.dart';
+import 'package:focus_app/screens/drawer_menu.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -21,6 +24,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   int totalPoints = 0;
   bool isLoading = true;
   String? error;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -88,22 +92,27 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String currentRoute = ModalRoute.of(context)?.settings.name ?? '/statistics';
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        key: _scaffoldKey,
+        drawer: AppDrawer(currentRoute: currentRoute, coins: Provider.of<UserProvider>(context).coins),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (error != null) {
       return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Lịch sử cây trồng'),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           backgroundColor: const Color(0xFF50B36A),
         ),
+        drawer: AppDrawer(currentRoute: currentRoute, coins: Provider.of<UserProvider>(context).coins),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -123,14 +132,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     if (sessions.isEmpty) {
       return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Lịch sử cây trồng'),
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.menu),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
           backgroundColor: const Color(0xFF50B36A),
         ),
+        drawer: AppDrawer(currentRoute: currentRoute, coins: Provider.of<UserProvider>(context).coins),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -149,14 +160,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('Lịch sử cây trồng'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.menu),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         backgroundColor: const Color(0xFF50B36A),
       ),
+      drawer: AppDrawer(currentRoute: currentRoute, coins: Provider.of<UserProvider>(context).coins),
       body: SingleChildScrollView(
         child: Column(
           children: [
