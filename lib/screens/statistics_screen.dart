@@ -53,31 +53,42 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               .parse(b)
               .compareTo(DateFormat('dd/MM/yyyy').parse(a)));
 
-        Map<String, int> sessionCountByDay = {};
+        Map<String, int> successSessionCountByDay = {};
         for (var session in sessions) {
           String date = session['date'];
-          sessionCountByDay[date] = (sessionCountByDay[date] ?? 0) + 1;
+          if (session['status'] == 'Thành công') {
+            successSessionCountByDay[date] = (successSessionCountByDay[date] ?? 0) + 1;
+          }
         }
 
-        displayDates = dates.reversed.take(5).toList().reversed.toList();
+        displayDates = dates.where((date) => successSessionCountByDay[date] != null && successSessionCountByDay[date]! > 0).toList()
+          ..sort((a, b) => DateFormat('dd/MM/yyyy')
+              .parse(b)
+              .compareTo(DateFormat('dd/MM/yyyy').parse(a)));
+
+        displayDates = displayDates.take(5).toList();
+
         barGroups = [];
         for (int i = 0; i < displayDates.length; i++) {
-          barGroups.add(
-            BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: sessionCountByDay[displayDates[i]]!.toDouble(),
-                  color: Colors.green,
-                  width: 16,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
+          int sessionCount = successSessionCountByDay[displayDates[i]] ?? 0;
+          if (sessionCount > 0) {
+            barGroups.add(
+              BarChartGroupData(
+                x: i,
+                barRods: [
+                  BarChartRodData(
+                    toY: sessionCount.toDouble(),
+                    color: Colors.green,
+                    width: 16,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(4),
+                      topRight: Radius.circular(4),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
+                ],
+              ),
+            );
+          }
         }
 
         isLoading = false;
@@ -159,12 +170,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       );
     }
 
+    // Tìm giá trị lớn nhất của toY để đặt maxY
+    double maxY = barGroups.isNotEmpty
+        ? barGroups.map((group) => group.barRods[0].toY).reduce((a, b) => a > b ? a : b)
+        : 1;
+    maxY = (maxY + 1).ceilToDouble(); // Làm tròn lên để có không gian
+
     return Scaffold(
       key: _scaffoldKey,
-        appBar: AppBar(
-          title: const Text('Lịch sử cây trồng'),
-          leading: IconButton(
-            icon: const Icon(Icons.menu),
+      appBar: AppBar(
+        title: const Text('Lịch sử cây trồng'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         backgroundColor: const Color(0xFF50B36A),
@@ -204,7 +221,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
+                        interval: 1, // Đặt khoảng cách đều nhau là 1
                         getTitlesWidget: (value, meta) {
+                          if (value < 0 || value > maxY) return const Text('');
                           return Text(
                             value.toInt().toString(),
                             style: const TextStyle(fontSize: 12),
@@ -217,6 +236,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                   borderData: FlBorderData(show: false),
                   barGroups: barGroups,
+                  minY: 0,
+                  maxY: maxY,
                 ),
               ),
             ),

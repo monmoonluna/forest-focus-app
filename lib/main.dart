@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focus_app/screens/overlay.dart';
 import 'package:focus_app/screens/statistics_screen.dart';
 import 'package:focus_app/services/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +21,10 @@ void main() async {
       child: const FocusApp(),
     ),
   );
+}
+@pragma('vm:entry-point')
+void overlayMain() {
+  runApp(OverlayApp());
 }
 
 class FocusApp extends StatelessWidget {

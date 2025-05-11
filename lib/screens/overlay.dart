@@ -46,8 +46,8 @@ class OverlayApp extends StatelessWidget {
                        const intent = AndroidIntent(
                          action: 'android.intent.action.MAIN',
                          category: 'android.intent.category.LAUNCHER',
-                         package: 'com.example.focusapp1',
-                         componentName: 'com.example.focusapp1.MainActivity',
+                         package: 'com.example.focus_app',
+                         componentName: 'com.example.focus_app.MainActivity',
                        );
                        await intent.launch();
                     },

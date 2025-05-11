@@ -6,7 +6,6 @@ class UserProvider extends ChangeNotifier {
   int _coins = 2000; // Default starting coins
   String _displayName = 'Anonymous'; // Default display name
   List<String> _purchasedItems = []; // Items bought in shop
-  List<bool> _achievementsStatus = List<bool>.filled(6, false); // Achievement unlocked status
   List<int> _currentProgress = List<int>.filled(6, 0); // Current progress for each achievement
   List<int> _requiredProgress = [4, 10, 50, 5, 100, 7]; // Initial required progress for each achievement
 
@@ -18,7 +17,6 @@ class UserProvider extends ChangeNotifier {
   int get coins => _coins;
   String get displayName => _displayName;
   List<String> get purchasedItems => List.unmodifiable(_purchasedItems);
-  List<bool> get achievementsStatus => List.unmodifiable(_achievementsStatus);
   List<int> get currentProgress => List.unmodifiable(_currentProgress);
   List<int> get requiredProgress => List.unmodifiable(_requiredProgress);
 
@@ -40,7 +38,6 @@ class UserProvider extends ChangeNotifier {
         _coins = doc.get('coins') ?? 2000;
         _displayName = doc.get('display_name') ?? 'Anonymous';
         _purchasedItems = List<String>.from(doc.get('purchasedItems') ?? []);
-        _achievementsStatus = List<bool>.from(doc.get('achievementsStatus') ?? List.filled(6, false));
         _currentProgress = List<int>.from(doc.get('currentProgress') ?? [2, 0, 0, 0, 0, 0]);
         _requiredProgress = List<int>.from(doc.get('requiredProgress') ?? [4, 10, 50, 5, 100, 7]);
       } else {
@@ -51,7 +48,6 @@ class UserProvider extends ChangeNotifier {
           'display_name': user.displayName ?? 'Anonymous',
           'coins': 2000,
           'purchasedItems': [],
-          'achievementsStatus': List.filled(6, false),
           'currentProgress': [2, 0, 0, 0, 0, 0],
           'requiredProgress': [4, 10, 50, 5, 100, 7],
           'created_at': FieldValue.serverTimestamp(),
@@ -77,25 +73,23 @@ class UserProvider extends ChangeNotifier {
         'coins': _coins,
         'display_name': _displayName,
         'purchasedItems': _purchasedItems,
-        'achievementsStatus': _achievementsStatus,
         'currentProgress': _currentProgress,
         'requiredProgress': _requiredProgress,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
       print("Lỗi lưu dữ liệu người dùng: $e");
-      // Có thể thêm callback để thông báo lỗi cho UI
     }
   }
 
-  /// Increase coin balance and persist
+  // Increase coin balance and persist
   void addCoins(int amount) {
     _coins += amount;
     _saveUserData();
     notifyListeners();
   }
 
-  /// Spend coins and record purchased item
+  // Spend coins and record purchased item
   void spendCoins(int amount, String itemName) {
     if (_coins >= amount && !_purchasedItems.contains(itemName)) {
       _coins -= amount;
@@ -105,7 +99,7 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Update progress for an achievement
+  // Update progress for an achievement
   void updateProgress(int index, int amount) {
     if (index >= 0 && index < _currentProgress.length) {
       _currentProgress[index] += amount;
@@ -114,26 +108,22 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Unlock an achievement by index and persist
+  // Unlock an achievement by index and persist
   void unlockAchievement(int index) {
-    if (index >= 0 &&
-        index < _achievementsStatus.length &&
-        !_achievementsStatus[index] &&
+    if (index >= 0 && index < _requiredProgress.length &&
         _currentProgress[index] >= _requiredProgress[index]) {
-      _achievementsStatus[index] = true;
-      _requiredProgress[index] *= 2; // Double the requirement for next unlock
-      addCoins(100); // Reward coins on unlock
+      _requiredProgress[index] *= 2; // Nhân đôi yêu cầu cho lần tiếp theo
+      addCoins(100); // Thưởng 100 coins
       _saveUserData();
       notifyListeners();
     }
   }
 
-  /// Reset user data (for testing or logout)
+  // Reset user data (for testing or logout)
   Future<void> resetUserData() async {
     _coins = 2000;
     _displayName = 'Anonymous';
     _purchasedItems.clear();
-    _achievementsStatus = List<bool>.filled(_achievementsStatus.length, false);
     _currentProgress = [2, 0, 0, 0, 0, 0]; // Reset with initial progress for Novice Planter
     _requiredProgress = [4, 10, 50, 5, 100, 7]; // Reset to initial requirements
     await _saveUserData();
