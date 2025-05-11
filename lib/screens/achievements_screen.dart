@@ -22,6 +22,7 @@ class AchievementScreen extends StatefulWidget {
 
 class _AchievementScreenState extends State<AchievementScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _showStarEffect = false; // Theo dõi trạng thái hiệu ứng ngôi sao
 
   // Danh sách thành tựu
   final List<Achievement> achievements = [
@@ -35,21 +36,22 @@ class _AchievementScreenState extends State<AchievementScreen> {
 
   void _claimAchievement(int index, Achievement achievement) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.achievementsStatus[index] &&
-        userProvider.currentProgress[index] >= userProvider.requiredProgress[index]) {
-      userProvider.unlockAchievement(index); // Gọi hàm unlock từ UserProvider
+    if (userProvider.currentProgress[index] >= userProvider.requiredProgress[index]) {
+      userProvider.unlockAchievement(index);
+      // Kích hoạt hiệu ứng ngôi sao
+      setState(() {
+        _showStarEffect = true;
+      });
+      // Tắt hiệu ứng sau 1 giây
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() {
+          _showStarEffect = false;
+        });
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${achievement.title} claimed! +100 coins'),
+          content: Text('${achievement.title} completed! +100 coins'),
           backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else if (userProvider.achievementsStatus[index]) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${achievement.title} already claimed'),
-          backgroundColor: Colors.grey,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -75,7 +77,7 @@ class _AchievementScreenState extends State<AchievementScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF388E3C),
         title: const Text(
-          'Achievements',
+          'Thành tựu',
           style: TextStyle(color: Colors.white),
         ),
         leading: IconButton(
@@ -111,29 +113,45 @@ class _AchievementScreenState extends State<AchievementScreen> {
         ],
       ),
       drawer: AppDrawer(currentRoute: currentRoute, coins: userProvider.coins),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.75,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount: achievements.length,
-        itemBuilder: (context, index) {
-          final achievement = achievements[index];
-          final isUnlocked = userProvider.achievementsStatus[index];
-          final currentProgress = userProvider.currentProgress[index];
-          final requiredProgress = userProvider.requiredProgress[index];
-          return _buildAchievementCard(
-              achievement, index, isUnlocked, currentProgress, requiredProgress);
-        },
+      body: Stack(
+        children: [
+          GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: achievements.length,
+            itemBuilder: (context, index) {
+              final achievement = achievements[index];
+              final currentProgress = userProvider.currentProgress[index];
+              final requiredProgress = userProvider.requiredProgress[index];
+              return _buildAchievementCard(achievement, index, currentProgress, requiredProgress);
+            },
+          ),
+          // Hiệu ứng ngôi sao
+          if (_showStarEffect)
+            Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                transform: Matrix4.identity()..scale(_showStarEffect ? 1.5 : 1.0),
+                child: const Icon(
+                  Icons.star,
+                  size: 100,
+                  color: Colors.amber,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildAchievementCard(Achievement achievement, int index, bool isUnlocked,
-      int currentProgress, int requiredProgress) {
+  Widget _buildAchievementCard(
+      Achievement achievement, int index, int currentProgress, int requiredProgress) {
     // Cập nhật description để hiển thị tiến trình động
     final displayDescription = achievement.description.contains('(0/')
         ? achievement.description.replaceFirst(
@@ -160,14 +178,16 @@ class _AchievementScreenState extends State<AchievementScreen> {
             child: Container(
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isUnlocked ? const Color(0xFFFFF9C4) : Colors.grey[200],
+                color: currentProgress >= requiredProgress
+                    ? const Color(0xFFFFF9C4)
+                    : Colors.grey[200],
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Icon(
-                  isUnlocked ? Icons.star : Icons.lock,
+                  currentProgress >= requiredProgress ? Icons.star : Icons.lock,
                   size: 60,
-                  color: isUnlocked ? Colors.amber : Colors.grey,
+                  color: currentProgress >= requiredProgress ? Colors.amber : Colors.grey,
                 ),
               ),
             ),
@@ -196,16 +216,20 @@ class _AchievementScreenState extends State<AchievementScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ElevatedButton(
-              onPressed: () => _claimAchievement(index, achievement),
+              onPressed: currentProgress >= requiredProgress
+                  ? () => _claimAchievement(index, achievement)
+                  : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isUnlocked ? Colors.grey : const Color(0xFF00C853),
+                backgroundColor: currentProgress >= requiredProgress
+                    ? const Color(0xFF00C853)
+                    : Colors.grey,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 36),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(isUnlocked ? 'Claimed' : 'Claim'),
+              child: const Text('Claim'),
             ),
           ),
         ],
