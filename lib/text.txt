@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class CircularTimePicker extends StatefulWidget {
   final Function(int) onChanged;
-  final Function(String, bool)? onTreeChanged; // New callback for tree changes
+  final Function(String, bool)? onTreeChanged;
 
   const CircularTimePicker({super.key, required this.onChanged, this.onTreeChanged});
 
@@ -32,11 +32,11 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
 
   final List<String> availableTreesSquare = [
     'assets/images/tree_stage_4_square.png',
-    'assets/images/balloon_flower.png',
-    'assets/images/celestial_tree.png',
-    'assets/images/crystal_tree.png',
-    'assets/images/geraniums_flower.png',
-    'assets/images/golden_tree.png',
+    'assets/images/balloon_flower_square.png',
+    'assets/images/celestial_tree_square.png',
+    'assets/images/crystal_tree_square.png',
+    'assets/images/geraniums_flower_square.png',
+    'assets/images/golden_tree_square.png',
   ];
 
   @override
@@ -70,16 +70,23 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
     double rawAngle = atan2(dy, dx) + pi / 2;
     if (rawAngle < 0) rawAngle += 2 * pi;
 
-    double newAngle = rawAngle;
-    int newMinutes = (10 + (newAngle / (2 * pi) * 110)).round().clamp(10, 120);
+    int newMinutes = (10 + (rawAngle / (2 * pi) * 110)).round();
 
-    int currentMinutes = (10 + (angle / (2 * pi) * 110)).round().clamp(10, 120);
+    int currentMinutes = (10 + (angle / (2 * pi) * 110)).round();
 
-    bool isClockwise = (newAngle - angle) <= 0 && (newAngle - angle).abs() > pi;
-    bool isCounterClockwise = (newAngle - angle) >= 0 && (angle - newAngle).abs() > pi;
+    double angleDiff = rawAngle - angle;
+    if (angleDiff > pi) angleDiff -= 2 * pi;
+    if (angleDiff < -pi) angleDiff += 2 * pi;
+    bool isClockwise = angleDiff < 0;
+    bool isCounterClockwise = angleDiff > 0;
 
-    if ((currentMinutes == 10 && isCounterClockwise) ||
-        (currentMinutes == 120 && isClockwise)) return;
+    if ((newMinutes < 10 && isCounterClockwise) || (newMinutes > 120 && isClockwise)) {
+      return;
+    }
+
+    newMinutes = newMinutes.clamp(10, 120);
+    double newAngle = (newMinutes - 10) / 110 * 2 * pi;
+    if (newAngle < 0) newAngle += 2 * pi;
 
     setState(() {
       angle = newAngle;
@@ -155,7 +162,7 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text("OK"),
+                  child: const Text("Cancel"),
                 ),
               ],
             );

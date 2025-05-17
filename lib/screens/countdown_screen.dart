@@ -15,12 +15,17 @@ class CountdownScreen extends StatefulWidget {
   final String tag;
   final Color tagColor;
   final bool isDeepFocus;
+  final String selectedTreeAsset;
+  final bool isDefaultTree;
+
   const CountdownScreen({
     super.key,
     required this.totalMinutes,
     required this.tag,
     required this.tagColor,
     required this.isDeepFocus,
+    required this.selectedTreeAsset,
+    required this.isDefaultTree,
   });
 
   @override
@@ -94,7 +99,9 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => CompletionScreen(
-              treeImage: getTreeImage(0, widget.totalMinutes * 60),
+              treeImage: widget.isDefaultTree
+                  ? getTreeImage(0, widget.totalMinutes * 60)
+                  : getNonDefaultTreeImage(widget.selectedTreeAsset, 0, widget.totalMinutes * 60),
               tag: widget.tag,
               totalMinutes: widget.totalMinutes,
               tagColor: widget.tagColor,
@@ -160,6 +167,17 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
           ? 'assets/images/tree_stage_6.png'
           : 'assets/images/tree_stage_7.png';
     }
+  }
+
+  String getNonDefaultTreeImage(String treeAsset, int remaining, int total) {
+    double progress = 1 - remaining / total;
+    String baseName = treeAsset.replaceAll('.png', '');
+
+    return progress < 0.45
+        ? 'assets/images/tree_stage_1.png'
+        : progress < 0.95
+        ? 'assets/images/tree_stage_2.png'
+        : '$baseName.png';
   }
 
   void toggleSound() async {
@@ -362,8 +380,12 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                             return FadeTransition(opacity: animation, child: child);
                           },
                           child: Image.asset(
-                            getTreeImage(remainingSeconds, totalSeconds),
-                            key: ValueKey(getTreeImage(remainingSeconds, totalSeconds)),
+                            widget.isDefaultTree
+                                ? getTreeImage(remainingSeconds, totalSeconds)
+                                : getNonDefaultTreeImage(widget.selectedTreeAsset, remainingSeconds, totalSeconds),
+                            key: ValueKey(widget.isDefaultTree
+                                ? getTreeImage(remainingSeconds, totalSeconds)
+                                : getNonDefaultTreeImage(widget.selectedTreeAsset, remainingSeconds, totalSeconds)),
                             fit: BoxFit.contain,
                           ),
                         ),
