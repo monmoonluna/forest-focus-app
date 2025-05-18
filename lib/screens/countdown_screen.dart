@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'completion_screen.dart';
@@ -15,12 +16,17 @@ class CountdownScreen extends StatefulWidget {
   final String tag;
   final Color tagColor;
   final bool isDeepFocus;
+  final String selectedTreeAsset;
+  final bool isDefaultTree;
+
   const CountdownScreen({
     super.key,
     required this.totalMinutes,
     required this.tag,
     required this.tagColor,
     required this.isDeepFocus,
+    required this.selectedTreeAsset,
+    required this.isDefaultTree,
   });
 
   @override
@@ -81,20 +87,27 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
           status: "Thành công",
           date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
           pointsEarned: pointsEarned,
+          tag: widget.tag,
         );
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(error)),
           );
         } else {
-          // Update coins in UserProvider
-          Provider.of<UserProvider>(context, listen: false).addCoins(pointsEarned);
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          // Update coins
+          userProvider.addCoins(pointsEarned);
+          // Update achievements
+          userProvider.updateProgress(1, 1); // Green Thumb: +1 tree planted
+          userProvider.updateProgress(0, (widget.totalMinutes / 60).toInt()); // Novice Planter: +hours
         }
         // Navigate to CompletionScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => CompletionScreen(
-              treeImage: getTreeImage(0, widget.totalMinutes * 60),
+              treeImage: widget.isDefaultTree
+                  ? getTreeImage(0, widget.totalMinutes * 60)
+                  : getNonDefaultTreeImage(widget.selectedTreeAsset, 0, widget.totalMinutes * 60),
               tag: widget.tag,
               totalMinutes: widget.totalMinutes,
               tagColor: widget.tagColor,
@@ -162,6 +175,17 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     }
   }
 
+  String getNonDefaultTreeImage(String treeAsset, int remaining, int total) {
+    double progress = 1 - remaining / total;
+    String baseName = treeAsset.replaceAll('.png', '');
+
+    return progress < 0.45
+        ? 'assets/images/tree_stage_1.png'
+        : progress < 0.95
+        ? 'assets/images/tree_stage_2.png'
+        : '$baseName.png';
+  }
+
   void toggleSound() async {
     if (isSoundOn) {
       await audioPlayer.stop();
@@ -187,7 +211,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     if (!await FlutterOverlayWindow.isPermissionGranted()) {
       bool? granted = await FlutterOverlayWindow.requestPermission();
       if (granted != true) {
-        print("Overlay permission denied");
+        print("Quyền overlay bị từ chối");
       }
     }
   }
@@ -203,11 +227,11 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
-          'Give up?',
+          'Bỏ cuộc?',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: const Text(
-          'Do you really want to give up growing your tree? 😢',
+          'Bạn có thực sự muốn từ bỏ việc trồng cây này? 😢',
           textAlign: TextAlign.center,
         ),
         actionsAlignment: MainAxisAlignment.center,
@@ -223,7 +247,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Cancel'),
+                child: const Text('Hủy'),
               ),
               const SizedBox(width: 16),
               ElevatedButton(
@@ -231,12 +255,13 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                   timer?.cancel();
                   cancelTimer.cancel();
                   audioPlayer.stop();
-                  // Save session when giving up (Failed)
+                  // Lưu phiên trồng cây khi bỏ cuộc (Thất bại)
                   String? error = await _sessionService.createPlantingSession(
                     duration: widget.totalMinutes - (remainingSeconds ~/ 60),
                     status: "Thất bại",
                     date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
                     pointsEarned: 0,
+                    tag: widget.tag,
                   );
                   if (error != null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -244,7 +269,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                     );
                   }
                   Navigator.pop(context);
-                  // Navigate to GiveUpScreen
+                  // Chuyển đến GiveUpScreen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -262,7 +287,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
-                child: const Text('Give up'),
+                child: const Text('Bỏ cuộc'),
               ),
             ],
           ),
@@ -290,25 +315,15 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
 
   Future<void> _showOverlay() async {
     if (await FlutterOverlayWindow.isPermissionGranted()) {
-      final platformDispatcher = WidgetsBinding.instance.platformDispatcher;
-
-      if (platformDispatcher.views.isEmpty) {
-        print('No FlutterView available');
-        return;
-      }
-
-      final view = platformDispatcher.views.first;
-      final screenSize = view.physicalSize / view.devicePixelRatio;
-      final screenWidth = screenSize.width.toInt();
-      final screenHeight = screenSize.height.toInt();
-
+      final screenWidth = (ui.window.physicalSize.width / 1).round();
+      final screenHeight = (ui.window.physicalSize.height /0.6).round();
       await FlutterOverlayWindow.showOverlay(
-        height: WindowSize.fullCover,
-        width: WindowSize.fullCover,
-        alignment: OverlayAlignment.center,
+        height: screenHeight,
+        width: screenWidth,
+        //alignment: OverlayAlignment.center,
         flag: OverlayFlag.defaultFlag,
         visibility: NotificationVisibility.visibilityPublic,
-        enableDrag: false,
+        enableDrag: false,// Căn giữa overlay
       );
     } else {
       await FlutterOverlayWindow.requestPermission();
@@ -339,7 +354,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Stay focused and let your tree grow! 🌱',
+                      'Hãy tập trung và để cây của bạn lớn lên! 🌱',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
@@ -362,8 +377,12 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                             return FadeTransition(opacity: animation, child: child);
                           },
                           child: Image.asset(
-                            getTreeImage(remainingSeconds, totalSeconds),
-                            key: ValueKey(getTreeImage(remainingSeconds, totalSeconds)),
+                            widget.isDefaultTree
+                                ? getTreeImage(remainingSeconds, totalSeconds)
+                                : getNonDefaultTreeImage(widget.selectedTreeAsset, remainingSeconds, totalSeconds),
+                            key: ValueKey(widget.isDefaultTree
+                                ? getTreeImage(remainingSeconds, totalSeconds)
+                                : getNonDefaultTreeImage(widget.selectedTreeAsset, remainingSeconds, totalSeconds)),
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -405,9 +424,7 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                         elevation: 4,
                       ),
                       child: Text(
-                        isCancelable
-                            ? 'Cancel (${cancelCountdown}s)'
-                            : 'Give up',
+                        isCancelable ? 'Hủy (${cancelCountdown}s)' : 'Bỏ cuộc',
                         style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),

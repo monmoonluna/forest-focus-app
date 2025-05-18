@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
 import 'signup_screen.dart';
 import '../services/auth_service.dart';
+import 'package:provider/provider.dart'; // thêm dòng này nếu chưa có
+import '../services/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
           'coins': 2000,
           'purchasedItems': [],
           'achievementsStatus': List.filled(6, false),
-          'currentProgress': [2, 0, 0, 0, 0, 0],
+          'currentProgress': [0, 0, 0, 0, 0, 0],
           'requiredProgress': [4, 10, 50, 5, 100, 7],
           'created_at': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -84,6 +86,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (user != null) {
         await _createUserDocument(user);
+
+        await Provider.of<UserProvider>(context, listen: false).loadUserData();
         _showSnackBar("Đăng nhập thành công!");
         Navigator.pushReplacement(
           context,

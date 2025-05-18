@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:focus_app/services/user_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -68,28 +69,28 @@ class AppDrawer extends StatelessWidget {
             _buildDrawerItem(
               context: context,
               icon: Icons.home,
-              text: 'Home',
+              text: 'Trang chủ',
               route: '/home',
               isSelected: currentRoute == '/home' || currentRoute == '/',
             ),
             _buildDrawerItem(
               context: context,
               icon: Icons.shopping_basket,
-              text: 'Shop',
+              text: 'Cửa hàng',
               route: '/shop',
               isSelected: currentRoute == '/shop',
             ),
             _buildDrawerItem(
               context: context,
               icon: Icons.emoji_events,
-              text: 'Achievements',
+              text: 'Thành tựu',
               route: '/achievements',
               isSelected: currentRoute == '/achievements',
             ),
             _buildDrawerItem(
               context: context,
               icon: Icons.add_chart,
-              text: 'Statistics',
+              text: 'Thống kê',
               route: '/statistics',
               isSelected: currentRoute == '/statistics',
             ),
@@ -97,23 +98,35 @@ class AppDrawer extends StatelessWidget {
             _buildDrawerItem(
               context: context,
               icon: Icons.settings,
-              text: 'Settings',
+              text: 'Cài đặt',
               onTap: () {
                 Navigator.pop(context);
-                // Add settings navigation if needed
+                // Thêm điều hướng tới màn hình cài đặt nếu cần
               },
             ),
             _buildDrawerItem(
               context: context,
               icon: Icons.logout,
-              text: 'Logout',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                      (route) => false,
-                );
+              text: 'Đăng xuất',
+              onTap: () async {
+                try {
+                  // Đặt lại dữ liệu người dùng trước khi đăng xuất (nếu cần lưu trạng thái hiện tại)
+                  await userProvider.resetUserData();
+                  // Đăng xuất khỏi Firebase
+                  await FirebaseAuth.instance.signOut();
+
+                  // Chuyển đến màn hình đăng nhập và xóa toàn bộ lịch sử điều hướng
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                        (route) => false,
+                  );
+                } catch (e) {
+                  print("Lỗi khi đăng xuất: $e");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Đăng xuất thất bại. Vui lòng thử lại.')),
+                  );
+                }
               },
             ),
           ],

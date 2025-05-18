@@ -26,6 +26,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   String? error;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Map of tag colors from main.dart
+  final Map<String, Color> tagColors = {
+    "Study": Colors.blue,
+    "Work": Colors.orange,
+    "Social": Colors.purple,
+    "Rest": Colors.green,
+    "Entertainment": Colors.pink,
+    "Sport": Colors.greenAccent,
+    "Other": Colors.brown,
+    "Unset": Colors.grey,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -294,6 +306,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
                         Color statusColor = session['status'] == 'Thành công' ? Colors.green : Colors.red;
                         IconData statusIcon = session['status'] == 'Thành công' ? Icons.check_circle : Icons.cancel;
+                        String tag = session['tag'] ?? 'Unset';
+                        Color tagColor = tagColors[tag] ?? Colors.grey;
 
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -306,7 +320,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               '$formattedTime - ${session['status']}',
                               style: TextStyle(color: statusColor),
                             ),
-                            subtitle: Text('${session['duration']} phút'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text('${session['duration']} phút'),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: tagColor.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.fiber_manual_record, color: tagColor, size: 10),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            tag,
+                                            style: TextStyle(color: tagColor, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                             trailing: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(

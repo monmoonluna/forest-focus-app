@@ -10,6 +10,7 @@ class PlantingSessionService {
     required String status,
     required String date,
     required int pointsEarned,
+    required String tag,
   }) async {
     try {
       if (_auth.currentUser == null) {
@@ -17,7 +18,7 @@ class PlantingSessionService {
         return "Người dùng chưa đăng nhập! Không thể tạo phiên.";
       }
       String userId = _auth.currentUser!.uid;
-      print("Creating session for user: $userId, duration: $duration, status: $status, date: $date, points: $pointsEarned");
+      print("Creating session for user: $userId, duration: $duration, status: $status, date: $date, points: $pointsEarned, tag: $tag");
       await _firestore.collection('planting_sessions').add({
         'user_id': userId,
         'timestamp': FieldValue.serverTimestamp(),
@@ -25,6 +26,7 @@ class PlantingSessionService {
         'status': status,
         'date': date,
         'points_earned': pointsEarned,
+        'tag': tag,
       });
       print("Session created successfully.");
       return null;

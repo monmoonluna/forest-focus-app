@@ -26,10 +26,10 @@ class _AchievementScreenState extends State<AchievementScreen> {
 
   // Danh sách thành tựu
   final List<Achievement> achievements = [
-    Achievement(title: 'Novice Planter', description: 'Total focused time reaches 4 hours'),
-    Achievement(title: 'Green Thumb', description: 'Plant 10 trees in the app'),
+    Achievement(title: 'Novice Planter', description: 'Total focused time reaches (hours)'),
+    Achievement(title: 'Green Thumb', description: 'Plant more trees in the app'),
     Achievement(title: 'Forest Keeper', description: 'Reach 50 hours of focused time'),
-    Achievement(title: 'Eco Warrior', description: 'Unlock 5 different tree types'),
+    Achievement(title: 'Eco Warrior', description: 'Unlock  different tree types'),
     Achievement(title: 'Master Gardener', description: 'Complete 100 tasks'),
     Achievement(title: 'Nature Lover', description: 'Spend 7 days in a row planting'),
   ];

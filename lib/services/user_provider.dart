@@ -23,7 +23,9 @@ class UserProvider extends ChangeNotifier {
   UserProvider() {
     _loadUserData();
   }
-
+  Future<void> loadUserData() async {
+    await _loadUserData();
+  }
   // Load user data from Firestore
   Future<void> _loadUserData() async {
     try {
@@ -36,7 +38,7 @@ class UserProvider extends ChangeNotifier {
       DocumentSnapshot doc = await _firestore.collection('users').doc(user.uid).get();
       if (doc.exists) {
         _coins = doc.get('coins') ?? 2000;
-        _displayName = doc.get('display_name') ?? 'Anonymous';
+        _displayName = doc.get('name') ?? 'Anonymous';
         _purchasedItems = List<String>.from(doc.get('purchasedItems') ?? []);
         _currentProgress = List<int>.from(doc.get('currentProgress') ?? [2, 0, 0, 0, 0, 0]);
         _requiredProgress = List<int>.from(doc.get('requiredProgress') ?? [4, 10, 50, 5, 100, 7]);
@@ -71,7 +73,7 @@ class UserProvider extends ChangeNotifier {
 
       await _firestore.collection('users').doc(user.uid).set({
         'coins': _coins,
-        'display_name': _displayName,
+        'name': _displayName,
         'purchasedItems': _purchasedItems,
         'currentProgress': _currentProgress,
         'requiredProgress': _requiredProgress,
@@ -119,14 +121,13 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  // Reset user data (for testing or logout)
+  // Reset user data (for logout)
   Future<void> resetUserData() async {
     _coins = 2000;
     _displayName = 'Anonymous';
     _purchasedItems.clear();
-    _currentProgress = [2, 0, 0, 0, 0, 0]; // Reset with initial progress for Novice Planter
+    _currentProgress = List<int>.filled(6, 0);
     _requiredProgress = [4, 10, 50, 5, 100, 7]; // Reset to initial requirements
-    await _saveUserData();
     notifyListeners();
   }
 }

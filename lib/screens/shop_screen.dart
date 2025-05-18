@@ -19,7 +19,6 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
-  int availableCoins = 2000; // Default value, can be updated from a global state later
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<ShopItem> shopItems = [
@@ -34,14 +33,27 @@ class _ShopScreenState extends State<ShopScreen> {
   void _purchaseItem(BuildContext context, ShopItem item) {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (userProvider.coins >= item.price) {
-      userProvider.spendCoins(item.price, item.name);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${item.name} purchased successfully!'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      // Check if the item is already purchased to avoid double-counting
+      if (!userProvider.purchasedItems.contains(item.name)) {
+        userProvider.spendCoins(item.price, item.name);
+        // Update progress for "Eco Warrior" achievement (index 3)
+        userProvider.updateProgress(3, 1);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item.name} purchased successfully!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${item.name} is already purchased!'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

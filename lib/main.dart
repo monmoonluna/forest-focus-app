@@ -22,6 +22,7 @@ void main() async {
     ),
   );
 }
+
 @pragma('vm:entry-point')
 void overlayMain() {
   runApp(OverlayApp());
@@ -40,7 +41,7 @@ class FocusApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/shop': (context) => const ShopScreen(),
         '/achievements': (context) => const AchievementScreen(),
-        '/statistics' : (context) => const StatisticsScreen()
+        '/statistics': (context) => const StatisticsScreen(),
       },
     );
   }
@@ -57,7 +58,11 @@ class _HomePageState extends State<HomePage> {
   int selectedMinutes = 10;
   String selectedTag = "Study";
   bool isDeepFocus = false;
+  bool isPlantTogether = false;
+  bool isCountExceeded = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  String selectedTreeAsset = 'assets/images/tree_stage_4.png';
+  bool isDefaultTree = true;
 
   final List<String> availableTags = [
     "Study", "Work", "Social", "Rest", "Entertainment", "Sport", "Other", "Unset",
@@ -119,36 +124,70 @@ class _HomePageState extends State<HomePage> {
   void _showDeepFocusDialog() {
     showDialog(
       context: context,
+      barrierDismissible: true, // Đóng cửa sổ khi nhấn ra ngoài
       builder: (context) {
-        return AlertDialog(
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Deep Focus Mode", textAlign: TextAlign.center),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "When enabled, switching apps will trigger a warning.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Deep Focus", style: TextStyle(fontSize: 16)),
-                  Switch(
-                    value: isDeepFocus,
-                    onChanged: (value) {
-                      setState(() {
-                        isDeepFocus = value;
-                      });
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
-            ],
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.timer, color: Colors.purple),
+                          SizedBox(width: 8),
+                          Text(
+                            "Timer Mode",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(color: Colors.grey, thickness: 1),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Colors.orange),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Deep focus",
+                              style: TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                          ],
+                        ),
+                        Switch(
+                          value: isDeepFocus,
+                          onChanged: (value) {
+                            setState(() {
+                              isDeepFocus = value;
+                            });
+                            // Cập nhật trạng thái của widget cha
+                            (context as Element).markNeedsBuild();
+                          },
+                          activeColor: Colors.green,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            },
           ),
         );
       },
@@ -158,7 +197,7 @@ class _HomePageState extends State<HomePage> {
   Widget buildCoinDisplay() {
     final userProvider = Provider.of<UserProvider>(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(30),
@@ -207,7 +246,22 @@ class _HomePageState extends State<HomePage> {
                   ),
                   GestureDetector(
                     onTap: _showDeepFocusDialog,
-                    child: const Icon(Icons.hourglass_top, size: 36, color: Colors.white),
+                    child: Container(
+                      width: 100,
+                      height: 40,
+                      padding: EdgeInsets.zero,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Image.asset(
+                        'assets/images/hourglass_icon2.png',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                   buildCoinDisplay(),
                 ],
@@ -226,6 +280,12 @@ class _HomePageState extends State<HomePage> {
                     onChanged: (value) {
                       setState(() {
                         selectedMinutes = value;
+                      });
+                    },
+                    onTreeChanged: (treeAsset, isDefault) {
+                      setState(() {
+                        selectedTreeAsset = treeAsset;
+                        isDefaultTree = isDefault;
                       });
                     },
                   ),
@@ -266,10 +326,13 @@ class _HomePageState extends State<HomePage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CountdownScreen(
-                                totalMinutes: selectedMinutes,
+                                //totalMinutes: selectedMinutes,
+                                totalMinutes: 1,
                                 tag: selectedTag,
                                 tagColor: tagColors[selectedTag] ?? Colors.white,
                                 isDeepFocus: isDeepFocus,
+                                selectedTreeAsset: selectedTreeAsset,
+                                isDefaultTree: isDefaultTree,
                               ),
                             ),
                           );
