@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'completion_screen.dart';
 import 'giveup_screen.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
@@ -17,6 +19,7 @@ class CountdownScreen extends StatefulWidget {
   final bool isDeepFocus;
   final String selectedTreeAsset;
   final bool isDefaultTree;
+  final String? sessionId;
 
   const CountdownScreen({
     super.key,
@@ -26,6 +29,7 @@ class CountdownScreen extends StatefulWidget {
     required this.isDeepFocus,
     required this.selectedTreeAsset,
     required this.isDefaultTree,
+    this.sessionId,
   });
 
   @override
@@ -38,6 +42,8 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
   AudioPlayer audioPlayer = AudioPlayer();
   bool isSoundOn = false;
   final PlantingSessionService _sessionService = PlantingSessionService();
+  late DatabaseReference _sessionRef;
+  bool _sessionFailed = false;
 
   int cancelCountdown = 10;
   bool isCancelable = true;
@@ -51,6 +57,25 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
     startTimer();
     startCancelTimer();
     _checkOverlayPermission();
+
+    if (widget.sessionId != null) {
+      _sessionRef = FirebaseDatabase.instance.ref().child('focus_sessions/${widget.sessionId}/session_details');
+      _sessionRef.onValue.listen((event) {
+        final data = event.snapshot.value as Map?;
+        if (data != null) {
+          setState(() {
+            _sessionFailed = data['failed'] ?? false;
+            if (_sessionFailed) {
+              timer?.cancel();
+              cancelTimer.cancel();
+              audioPlayer.stop();
+              Navigator.of(context).pop();
+            }
+            remainingSeconds = data['remaining_seconds'] ?? remainingSeconds;
+          });
+        }
+      });
+    }
   }
 
   void startCancelTimer() {
@@ -70,17 +95,19 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
 
   void startTimer() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      if (_sessionFailed) return;
       if (remainingSeconds > 0) {
         setState(() {
           remainingSeconds--;
         });
+        if (widget.sessionId != null) {
+          _sessionRef.update({'remaining_seconds': remainingSeconds});
+        }
       } else {
         timer.cancel();
         cancelTimer.cancel();
         audioPlayer.stop();
-        // Calculate points earned: 100 coins per 10 minutes
         int pointsEarned = (widget.totalMinutes ~/ 10) * 100;
-        // Save session when completed (Success)
         String? error = await _sessionService.createPlantingSession(
           duration: widget.totalMinutes,
           status: "Thành công",
@@ -92,10 +119,8 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
             SnackBar(content: Text(error)),
           );
         } else {
-          // Update coins in UserProvider
           Provider.of<UserProvider>(context, listen: false).addCoins(pointsEarned);
         }
-        // Navigate to CompletionScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => CompletionScreen(
@@ -249,9 +274,9 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                   timer?.cancel();
                   cancelTimer.cancel();
                   audioPlayer.stop();
-                  // Save session when giving up (Failed)
+                  int minutesCompleted = widget.totalMinutes - (remainingSeconds ~/ 60);
                   String? error = await _sessionService.createPlantingSession(
-                    duration: widget.totalMinutes - (remainingSeconds ~/ 60),
+                    duration: minutesCompleted,
                     status: "Thất bại",
                     date: DateFormat('dd/MM/yyyy').format(DateTime.now()),
                     pointsEarned: 0,
@@ -261,8 +286,22 @@ class _CountdownScreenState extends State<CountdownScreen> with WidgetsBindingOb
                       SnackBar(content: Text(error)),
                     );
                   }
+                  if (widget.sessionId != null && widget.isDeepFocus) {
+                    await _sessionRef.update({'failed': true, 'is_active': false});
+                    final participantsRef = FirebaseDatabase.instance
+                        .ref()
+                        .child('focus_sessions/${widget.sessionId}/participants');
+                    final snapshot = await participantsRef.once();
+                    final Map<String, Object?> updates = {};
+                    final participantsData = snapshot.snapshot.value as Map?;
+                    if (participantsData != null) {
+                      participantsData.forEach((uid, data) {
+                        updates['$uid/status'] = 'cancelled';
+                      });
+                    }
+                    await participantsRef.update(updates);
+                  }
                   Navigator.pop(context);
-                  // Navigate to GiveUpScreen
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(

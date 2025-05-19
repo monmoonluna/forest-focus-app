@@ -1,11 +1,19 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class CircularTimePicker extends StatefulWidget {
   final Function(int) onChanged;
-  final Function(String, bool)? onTreeChanged; // New callback for tree changes
+  final Function(String, bool)? onTreeChanged;
+  final String? sessionId; // Thêm sessionId để đồng bộ với phiên Plant together
 
-  const CircularTimePicker({super.key, required this.onChanged, this.onTreeChanged});
+  const CircularTimePicker({
+    super.key,
+    required this.onChanged,
+    this.onTreeChanged,
+    this.sessionId,
+  });
 
   @override
   State<CircularTimePicker> createState() => _CircularTimePickerState();
@@ -16,6 +24,7 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
   double thumbSize = 28;
   bool isDragging = false;
   late AnimationController _controller;
+  late DatabaseReference _sessionRef;
 
   int selectedMinutes = 10;
   String selectedTreeAsset = 'assets/images/tree_stage_4.png';
@@ -48,6 +57,23 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
       lowerBound: 1.0,
       upperBound: 1.5,
     );
+
+    // Nếu có sessionId, đồng bộ với Realtime Database
+    if (widget.sessionId != null) {
+      _sessionRef = FirebaseDatabase.instance.ref().child('focus_sessions/${widget.sessionId}/session_details');
+      _sessionRef.onValue.listen((event) {
+        final data = event.snapshot.value as Map?;
+        if (data != null) {
+          setState(() {
+            selectedMinutes = (data['duration_minutes'] ?? selectedMinutes);
+            selectedTreeAsset = data['tree_asset'] ?? selectedTreeAsset;
+            // Cập nhật angle dựa trên selectedMinutes
+            angle = (selectedMinutes - 10) / 110 * 2 * pi;
+            if (angle < 0) angle += 2 * pi;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -90,6 +116,14 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
       }
     });
 
+    // Cập nhật Realtime Database nếu có sessionId
+    if (widget.sessionId != null) {
+      _sessionRef.update({
+        'duration_minutes': selectedMinutes,
+        'tree_asset': selectedTreeAsset,
+      });
+    }
+
     widget.onChanged(newMinutes);
   }
 
@@ -131,6 +165,13 @@ class _CircularTimePickerState extends State<CircularTimePicker> with SingleTick
                           selectedTreeAsset = treeCircular;
                           isDefaultTree = (treeCircular == getTreeImage(selectedMinutes));
                           widget.onTreeChanged?.call(selectedTreeAsset, isDefaultTree);
+
+                          // Cập nhật Realtime Database nếu có sessionId
+                          if (widget.sessionId != null) {
+                            _sessionRef.update({
+                              'tree_asset': selectedTreeAsset,
+                            });
+                          }
                         });
                       },
                       child: Container(
